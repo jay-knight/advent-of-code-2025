@@ -22,11 +22,23 @@ fn parse_ranges(line: &str) -> Vec<Vec<usize>> {
 fn number_is_valid(num: usize) -> bool {
     let s = num.to_string();
     let len = s.chars().count();
-    if len % 2 == 1 {
-        return true;
-    }
+    //if len % 2 == 1 {
+    //    return true;
+    //}
     let half = len / 2;
-    s[..half] != s[half..]
+    for size in 1..=half {
+        if s.chars()
+            .collect::<Vec<char>>()
+            .chunks(size)
+            .map(|c| c.iter().collect::<String>())
+            .collect::<Vec<String>>()
+            .windows(2)
+            .all(|c| c[0] == c[1]) {
+                return false
+
+        }
+    }
+    true
 }
 
 fn main() {
@@ -65,5 +77,7 @@ mod tests {
         assert_eq!(number_is_valid(12), true);
         assert_eq!(number_is_valid(100), true);
         assert_eq!(number_is_valid(1188511885), false);
+        assert_eq!(number_is_valid(151515), false);
+        assert_eq!(number_is_valid(151516), true);
     }
 }
