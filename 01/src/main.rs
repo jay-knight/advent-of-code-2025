@@ -25,22 +25,19 @@ impl Counts {
         let mut next = self;
         // I don't like that I had to loop this.
         match rotation.direction {
-                Direction::Left  => {
-                    next.position -= rotation.distance;
-                    next.pointed_at_zero += match (self.position, next.position) {
-                        (_, 1..) => 0,
-                        (1.., 0) => 1,
-                        (0, _) => -next.position / 100,
-                        _ => -next.position / 100 + 1,
-                    };
-                    next.position = next.position.rem_euclid(100);
-                },
-                Direction::Right => {
-                    next.position += rotation.distance;
-                    next.pointed_at_zero += next.position / 100;
-                    next.position = next.position % 100;
+            Direction::Left  => {
+                next.position -= rotation.distance;
+                next.pointed_at_zero += (-next.position + 100) / 100;
+                if self.position == 0 {
+                    next.pointed_at_zero -= 1;
                 }
+            },
+            Direction::Right => {
+                next.position += rotation.distance;
+                next.pointed_at_zero += next.position / 100;
+            }
         };
+        next.position = next.position.rem_euclid(100);
         if next.position == 0 {
             next.landed_on_zero += 1;
         }
