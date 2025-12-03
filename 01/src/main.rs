@@ -24,20 +24,23 @@ impl Counts {
     fn rotate(self: Self, rotation: Rotation) -> Self {
         let mut next = self;
         // I don't like that I had to loop this.
-        for _i in 0..rotation.distance {
-            next.position += match rotation.direction {
-                Direction::Left  => -1,
-                Direction::Right => 1,
-            };
-            next.position = match next.position {
-                -1 => 99,
-                100 => 0,
-                _ => next.position
-            };
-            if next.position == 0 {
-                next.pointed_at_zero += 1;
-            }
-        }
+        match rotation.direction {
+                Direction::Left  => {
+                    next.position -= rotation.distance;
+                    next.pointed_at_zero += match (self.position, next.position) {
+                        (_, 1..) => 0,
+                        (1.., 0) => 1,
+                        (0, _) => -next.position / 100,
+                        _ => -next.position / 100 + 1,
+                    };
+                    next.position = next.position.rem_euclid(100);
+                },
+                Direction::Right => {
+                    next.position += rotation.distance;
+                    next.pointed_at_zero += next.position / 100;
+                    next.position = next.position % 100;
+                }
+        };
         if next.position == 0 {
             next.landed_on_zero += 1;
         }
@@ -96,15 +99,20 @@ mod tests {
 
     #[test]
     fn test_rotation_from() {
+        assert_eq!(1 / -100, 0);
+        assert_eq!(-1 / -100, 0);
+        assert_eq!(-101 / -100, 1);
         let rotation = Rotation::from("L1");
         assert_eq!(rotation.direction, Direction::Left);
         assert_eq!(rotation.distance, 1);
 
-        assert_eq!(Counts::new(50).rotate(Rotation::from("L25")), Counts{position: 25, landed_on_zero: 0, pointed_at_zero: 0});
-        assert_eq!(Counts::new(50).rotate(Rotation::from("R25")), Counts{position: 75, landed_on_zero: 0, pointed_at_zero: 0});
-        assert_eq!(Counts::new(50).rotate(Rotation::from("L68")), Counts{position: 82, landed_on_zero: 0, pointed_at_zero: 1});
-        assert_eq!(Counts::new(50).rotate(Rotation::from("L100")), Counts{position: 50, landed_on_zero: 0, pointed_at_zero: 1});
-        assert_eq!(Counts::new(0).rotate(Rotation::from("L99")), Counts{position: 1, landed_on_zero: 0, pointed_at_zero: 0});
+        assert_eq!(Counts::new(50).rotate(Rotation::from("L25")), Counts{position: 25, landed_on_zero: 0, pointed_at_zero: 0}, "50 -> L25");
+        assert_eq!(Counts::new(50).rotate(Rotation::from("R25")), Counts{position: 75, landed_on_zero: 0, pointed_at_zero: 0}, "50 -> R25");
+        assert_eq!(Counts::new(50).rotate(Rotation::from("R50")), Counts{position: 0, landed_on_zero: 1, pointed_at_zero: 1}, "50 -> R50");
+        assert_eq!(Counts::new(50).rotate(Rotation::from("L50")), Counts{position: 0, landed_on_zero: 1, pointed_at_zero: 1}, "50 -> L50");
+        assert_eq!(Counts::new(50).rotate(Rotation::from("L68")), Counts{position: 82, landed_on_zero: 0, pointed_at_zero: 1}, "50 -> L68");
+        assert_eq!(Counts::new(50).rotate(Rotation::from("L100")), Counts{position: 50, landed_on_zero: 0, pointed_at_zero: 1}, "50 -> L100");
+        assert_eq!(Counts::new(0).rotate(Rotation::from("L99")), Counts{position: 1, landed_on_zero: 0, pointed_at_zero: 0}, "0 -> L99");
         assert_eq!(
             Counts::new(50)
                 .rotate(Rotation::from("L68"))
