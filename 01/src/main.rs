@@ -29,6 +29,7 @@ impl Counts {
                 next.position -= rotation.distance;
                 next.pointed_at_zero += (-next.position + 100) / 100;
                 if self.position == 0 {
+                    // we counted that zero last time.
                     next.pointed_at_zero -= 1;
                 }
             },
